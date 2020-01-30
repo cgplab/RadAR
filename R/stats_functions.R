@@ -615,7 +615,7 @@ do_feature_selection <- function(rdr = NULL,
                                  which_data = "scaled",
                                  corr_measure = "pearson",
                                  min_features_per_group = 5,
-                                 thr_pca_cum_prop = .9,
+                                 thr_pca_cum_prop = .8,
                                  response = NULL
 )
 {

@@ -669,7 +669,7 @@ data_signatures <- data_signatures[order(data_signatures[, 2], decreasing = T), 
 dotchart(t(data_signatures),  
          col =  c("#E41A1C", "#377EB8"), 
          pch = 19, xlab = "Concordance Index", 
-         xlim = c(.53, .66))
+         xlim = c(.53, .65))
 
 data_signatures
 
