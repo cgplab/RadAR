@@ -38,5 +38,4 @@ To show how to use RadAR for the analysis of radiomic datasets, a step-by-step t
 
 ## Citation
 
-<<<<<<< HEAD
 Benelli M, Barucci A, Zoppetti N, Calusi S, Redapi L, Della Gala G, Piffer S, Bernardi L, Fusi F, Pallotta S. Comprehensive analysis of radiomic datasets by RadAR. *Submitted*.
