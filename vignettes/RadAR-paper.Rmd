@@ -16,11 +16,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-The quantitative analysis of biomedical images, referred to as Radiomics, is emerging as a promising approach to facilitate clinical decisions and improve patients’ stratification. A typical radiomic workflow includes image acquisition, segmentation, feature extraction and statistical analysis of high-dimensional datasets (Gillies et al., 2016). While procedures for primary radiomic analyses have been established during the last years, processing of resulting radiomic datasets remains challenging due to the lack of dedicated tools.
-Here, we present RadAR (Radiomics Analysis with R), a new software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements statistical functions tailored to these kinds of data. We applied RadAR to two radiomic datasets and showed that it was able to recapitulate expected results, demonstrating its reliability and proving that RadAR may represent a valuable tool for the radiomic community. 
+The quantitative analysis of biomedical images, referred to as Radiomics, is emerging as a promising approach to facilitate clinical decisions and improve patients’ stratification. The typical radiomic workflow includes image acquisition, segmentation, feature extraction and analysis of high-dimensional datasets. While procedures for primary radiomic analyses have been established during the last years, the processing of the resulting radiomic datasets remains challenging due to the lack of specific tools. 
 
+Here, we present RadAR (Radiomics Analysis with R), a new software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements multiple statistical methods for the analysis of these data. We used RadAR to analyse the radiomic profiles of more than 500 cancer patients from publicly available datasets and showed that it was able to recapitulate expected results, demonstrating its reliability and proving that RadAR may represent a valuable tool for the radiomic community.
 
-Here we show how to perform secondary analysis of radiomic features by **RadAR** (Radiomic Analysis with R).  
+Here we show how to perform analysis of radiomic features by **RadAR** (Radiomics Analysis with R).  
 
 ## Installation
 RadAR  is freely available under GPL-3 license at  <https://github.com/cgplab/RadAR>. 
@@ -675,6 +675,14 @@ data_signatures
 
 ```
 
+## Save the `rdr` object
+
+To save the `rdr`, use the following code.
+
+```{r, eval = F}
+## save a rdr object
+save (rdr, file = "radar_object.rda")
+```
 
 
 
