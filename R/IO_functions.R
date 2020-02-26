@@ -143,7 +143,7 @@ import_3dslicer <- function (dir) {
       assertthat::assert_that(assertthat::are_equal(nfeatures_file0, nfeatures_file),
                               msg = paste("[RadAR] Error: unexpected number of features in", list_files[i]))
     }
-    ix_data <- which(xx$Image.type != "general")
+    ix_data <- which(xx$Image.type %in% c("general", "diagnostics") == F)
     #xx <- xx[which(xx$Image.type %in% image_type),]
 
     mask_id <- c(mask_id, mylabels)
