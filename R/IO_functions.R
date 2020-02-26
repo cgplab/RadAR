@@ -134,7 +134,7 @@ import_3dslicer <- function (dir) {
       assertthat::assert_that(length(xx$Feature.Name) > 0, msg = "[RadAR] Error: Bad or unexpected format")
       #assertthat::assert_that(all(is.numeric(xx$Value)), msg = "[RadAR] Error: Bad or unexpected format")
       nfeatures_file0 <- table(xx$Feature.Class)/length(unique(xx$Label))
-      ix_data_tmp <- which(xx$Label == mylabels[1] & xx$Image.type!= "general")
+      ix_data_tmp <- which(xx$Label == mylabels[1] & xx$Image.type %in% c("general", "diagnostics") == F)
       image_types <- xx$Image.type[ix_data_tmp]
       feature_names <- xx$Feature.Name[ix_data_tmp]
 
