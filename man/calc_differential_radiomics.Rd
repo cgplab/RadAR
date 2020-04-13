@@ -12,17 +12,17 @@ calc_differential_radiomics(rdr = NULL, conditions = NULL,
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}
 
 \item{conditions}{(numeric, character) Vector of labels for each sample in rdr. Should have the same
-length of \code{ncol(rdr)}. Feature values will be grouped based on this. Required.}
+length of \code{ncol(rdr)}. Required.}
 
 \item{which_data}{(character) Which data use for plot. It can be one of the following: "normal", "scaled", "normalized".}
 
-\item{method}{(character) Which statistical methods use for differential analysis. It can be "wilcox" (Wilcoxon-Mann-Whitney)
-or "auc" (Area Under the Curve).}
+\item{method}{(character) Which statistical methods use for differential analysis.
+It can be "wilcox" (Wilcoxon-Mann-Whitney), "auc" (Area Under the Curve) or "kruskal-wallis".}
 
 \item{adjust_pvalues_by}{(character) Which method use to correct p-values from wilcox test. Print available methods by
 \code{\link{p.adjust.methods}}.}
 
-\item{thr_pvalue}{(numeric) P-value threshold to identify statistically significant features.
+\item{thr_pvalue}{(numeric) P-value threshold to identify statistically significant features for wilcox or kruskal-wallis.
 It should be in the range (0, 1].}
 
 \item{thr_auc}{(numeric) AUC threshold to identify statistically significant features.

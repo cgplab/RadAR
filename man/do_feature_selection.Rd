@@ -7,7 +7,8 @@
 do_feature_selection(rdr = NULL, n_features = NULL, select_by = NULL,
   method = "hcl", surv_obj = NULL, which_data = "scaled",
   corr_measure = "pearson", min_features_per_group = 5,
-  thr_pca_cum_prop = 0.9, response = NULL)
+  thr_pca_cum_prop = 0.8, response = NULL, lambda = "min",
+  alpha = NULL)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}
@@ -18,7 +19,11 @@ do_feature_selection(rdr = NULL, n_features = NULL, select_by = NULL,
 of similar (i.e., redundant) features. It can be one of the following: "variability", "random", "concordance".}
 
 \item{method}{(character) Which  method use to identify redundant features. It can be one of the following:
-"mRMR" (minimum-redundancy-maximum-relevance),"hcl" (hierarchical clustering of correlation matrix) or "pca" (K-means applied to Principal Component Analysis).}
+"mRMR" (minimum-redundancy-maximum-relevance),"hcl" (hierarchical clustering of correlation matrix), "pca" (K-means applied to Principal Component Analysis),
+"glmnet-cox" (generalized linear model via penalized maximum likelihood (glmnet) fitting cox regression model),
+"glmnet-binonmial" (glmnet fitting binomial regression model),
+Using mRMR, this function works as a wrapper to \code{\link{mRMR}} package.
+Using glmnet-*, this function works as a wrapper to \code{\link{glmnet}} package.}
 
 \item{surv_obj}{An object of class \code{\link{Surv}}. Required if select_by is "concordance".}
 
@@ -33,7 +38,14 @@ of similar (i.e., redundant) features. It can be one of the following: "variabil
 \item{thr_pca_cum_prop}{(numeric) Threshold to select number of components based on
 cumulative proportion of explained variance criterion.}
 
-\item{response}{(numeric) A response variable, required if mRMR method is used.}
+\item{response}{(numeric) A response variable, required if any of mRMR or glmnet-binomial or
+methods are used.}
+
+\item{lambda}{(character) In glmnet, it controls the overall strength of the penalty.
+Possible values are "min" or "1se" (1 standard deviation). For more details see \code{\link{glmnet}}}
+
+\item{alpha}{(numeric) In glmnet, it controls elastic-net penalty.
+Typical values are 0 (ridge) or 1 (lasso). For more details see \code{\link{glmnet}}.}
 }
 \value{
 A list including two elements:
@@ -41,7 +53,7 @@ A list including two elements:
 `signature`: the radiomic features included in the signature
 }
 \description{
-This function implements different methods to perform feature selection of radiomic datasets
+This function implements different methods to perform feature selection of radiomic datasets.
 }
 \author{
 Matteo Benelli (\email{matteo.benelli@uslcentro.toscana.it})

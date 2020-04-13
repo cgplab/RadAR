@@ -603,7 +603,7 @@ rdr_glmnet_cox <- do_feature_selection(rdr = lung1_rdr,
 ## generate a radiomic signature using glmnet-binomial
 rdr_glmnet_binomial <- do_feature_selection(rdr = lung1_rdr,
                                             method = "glmnet-binomial",
-                                            surv_obj = surv_obj,
+                                            response = rdr$deadstatus.event,
                                             which_data = "normal")$signature
 
 ```
@@ -703,12 +703,12 @@ training_glmnet_binomial <- test_radiomic_signature(rdr = rdr,
 
 validation_glmnet_binomial <- test_radiomic_signature(rdr = hn1_rdr,
                                                       signature = rdr_glmnet_binomial,
-                                                      urv_obj = surv_obj_hn1,
+                                                      surv_obj = surv_obj_hn1,
                                                       which_data = "normal")$concordance
 
 ```
 
-To compare the performace of the radiomic signature reported above, we report them in a dot chart, ordering them from the best (top) to the worst (bottom) performing  signatures in the in HN1,  the validation dataset
+To compare the performace of the radiomic signature reported above, we report them in a dot chart, ordering them from the best (top) to the worst (bottom) performing signatures in the in HN1 (validation dataset)
 
 ```{r, fig.width=7, fig.height=7}
 data_signatures <- rbind(c(training_Aerts[1], validation_Aerts[1]),
@@ -718,7 +718,7 @@ data_signatures <- rbind(c(training_Aerts[1], validation_Aerts[1]),
                          c(training_PCA_conc[1], validation_PCA_conc[1]),
                          c(training_PCA_var[1], validation_PCA_var[1]),
                          c(training_glmnet_cox[1], validation_glmnet_cox[1]),
-                         c(training_glmnet_binomial[1], training_glmnet_binomial[1])
+                         c(training_glmnet_binomial[1], validation_glmnet_binomial[1])
                          )
 
 rownames(data_signatures) <- c("Aerts et al. (2014)", 
@@ -738,7 +738,7 @@ data_signatures <- data_signatures[order(data_signatures[, 2], decreasing = T), 
 dotchart(t(data_signatures),  
          col =  c("#E41A1C", "#377EB8"), 
          pch = 19, xlab = "Concordance Index", 
-         xlim = c(.53, .65))
+         xlim = c(.53, .67))
 
 data_signatures
 

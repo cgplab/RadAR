@@ -612,7 +612,10 @@ calc_cox_regression <- function(rdr = NULL,
 #'
 #' @param rdr A RadAR object (class \code{\link{SummarizedExperiment}}).
 #' @param surv_obj An object of class \code{\link{Surv}}.
-#' @param signature (character) vector of radiomic features defining the signature
+#' @param signature (character) vector of radiomic features defining the signature.
+#' @param signature_rdr  RadAR object (class \code{\link{SummarizedExperiment}}) obtained by
+#' \code{\link{do_feature_selection}}. Required to test a model generated using
+#'  glmnet-cox or glmnet-binom.
 #' @param which_data (character) Which data use to compute concordance index. It can be one of the following: "normal",
 #' "scaled", "normalized".
 #'
@@ -627,14 +630,19 @@ calc_cox_regression <- function(rdr = NULL,
 test_radiomic_signature <- function(rdr = NULL,
                                     surv_obj = NULL,
                                     signature = NULL,
+                                    signature_rdr = NULL,
                                     which_data = "scaled"
 )
 {
 
   assertthat::assert_that(length(rdr) > 0, msg = "[RadAR] Error: rdr object required")
   assertthat::assert_that(is.Surv(surv_obj) > 0, msg = "[RadAR] Error: surv_obj object required")
-  assertthat::assert_that(length(signature) > 0, msg = "[RadAR] Error: signature object required")
+  assertthat::assert_that(length(signature) > 0 | length(signature_rdr) > 0, msg = "[RadAR] Error: signature object required")
   assertthat::assert_that(which_data %in% c("normal", "scaled", "normalized"), msg = "[RadAR] Error: Invalid data type")
+
+  if (length(signature_rdr) > 0) {
+    signature <- rownames(signature_rdr)
+  }
 
   if (!all(signature %in% rownames(rdr))) {
     ix <- which(signature %in% rownames(rdr) == F)
@@ -655,25 +663,30 @@ test_radiomic_signature <- function(rdr = NULL,
 
   data_sign <- data[signature, ]
 
-  if (metadata(rdr)$glmnet_model == F) {
-    res <- summary(coxph(surv_obj ~ t(data_sign)))
-  } else {
-    if (metadata(rdr)$glmnet_model_lambda == "min") {
-      my_s <- "lambda.min"
+  if (length(signature_rdr) > 0) {
+    if (length(metadata(signature_rdr)$glmnet_model) == 1) {
+      res <- summary(coxph(surv_obj ~ t(data_sign)))
     } else {
-      my_s <- "lambda.1se"
+      if (metadata(signature_rdr)$glmnet_model_lambda == "min") {
+        my_s <- "lambda.min"
+      } else {
+        my_s <- "lambda.1se"
+      }
+      cvfit <- metadata(signature_rdr)$glmnet_model
+      res <- list()
+      res$pred <- predict(cvfit,
+                          newx = t(data),
+                          s = my_s,
+                          type = "response")
+
+      res$concordance <- Cindex(pred = res$pred,
+                       y = surv_obj)
+
     }
-    cvfit <- metadata(rdr)$glmnet_model
-    res <- list()
-    res$pred <- predict(cvfit,
-                        newx = t(data),
-                        s = my_s,
-                        type = "response")
-
-    res$CI <- Cindex(pred = res$pred,
-                     y = surv_obj)
-
+  } else {
+    res <- summary(coxph(surv_obj ~ t(data_sign)))
   }
+
   return(res)
 }
 

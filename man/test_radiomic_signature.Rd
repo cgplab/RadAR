@@ -5,7 +5,7 @@
 \title{Test radiomic signature by Cox regression model}
 \usage{
 test_radiomic_signature(rdr = NULL, surv_obj = NULL,
-  signature = NULL, which_data = "scaled")
+  signature = NULL, signature_rdr = NULL, which_data = "scaled")
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}
@@ -14,11 +14,17 @@ test_radiomic_signature(rdr = NULL, surv_obj = NULL,
 
 \item{signature}{(character) vector of radiomic features defining the signature}
 
+\item{signature_rdr}{RadAR object (class \code{\link{SummarizedExperiment}}) obtained by
+\code{\link{do_feature_selection}}. Required for signatures generated using
+ glmnet-cox or glmnet-binom.}
+
 \item{which_data}{(character) Which data use to compute concordance index. It can be one of the following: "normal",
 "scaled", "normalized".}
 }
 \value{
-An updated (reduced) rdr (a RadAR object)
+In case of mRMR, hcl and pca methods, the function returns the results of the cox regression model, including the concordance index.
+In case of glmnet-cox method, the function returns a list of two elements, including 1) the prediction of the glmnet model on the new data
+and 2) the computation of concordance index.
 }
 \description{
 Test radiomic signature by Cox regression model

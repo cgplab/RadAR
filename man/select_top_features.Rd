@@ -5,7 +5,7 @@
 \title{Select top radiomic features according to a given statistics}
 \usage{
 select_top_features(rdr = NULL, which_statistics = "wilcox",
-  thr_pvalue_wilcox = 0.05, thr_auc = 0.8, thr_concordance = 0.1,
+  thr_pvalue = 0.05, thr_auc = 0.8, thr_concordance = 0.1,
   thr_cox_zvalue = 3, write_to = NULL)
 }
 \arguments{
@@ -14,7 +14,7 @@ select_top_features(rdr = NULL, which_statistics = "wilcox",
 \item{which_statistics}{(character) Select top features based on one of the following pre-computed statistics:
 "wilcox", "AUC", "concordance" or "cox".}
 
-\item{thr_pvalue_wilcox}{(numeric) P-value threshold to identify statistically significant features from wilcox.
+\item{thr_pvalue}{(numeric) P-value threshold to identify statistically significant features from wilcox.
 It should be in the range (0, 1].}
 
 \item{thr_auc}{(numeric) AUC threshold to identify statistically significant features from AUC
