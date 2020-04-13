@@ -1,15 +1,15 @@
 Package: RadAR
 Type: Package
 Title: Radiomic Analysis with R
-Version: 0.1.0
+Version: 0.1.2
 Authors@R: person("Matteo", "Benelli", role = c("aut", "cre"),
    email="matteo.benelli@uslcentro.toscana.it")
 Author: Matteo Benelli [aut, cre]
 Maintainer: Matteo Benelli <matteo.benelli@uslcentro.toscana.it>
 Description: Bundle of functions to perform comprehensive 
-   statitistical analysis of radiomic datasets.
+   statistical analysis of radiomic datasets.
 biocViews: limma, SummarizedExperiment
-Depends: R (>= 3.5.0), assertthat, corrplot, limma, mRMRe, pheatmap, SummarizedExperiment, survival, tibble
+Depends: R (>= 3.5.0), assertthat, corrplot, limma, mRMRe, pheatmap, SummarizedExperiment, survival, tibble, glmnet
 Suggests: gdata, survminer
 License: GPL (>= 3)
 Encoding: UTF-8

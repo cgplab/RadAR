@@ -298,7 +298,8 @@ As shown in the previous plot, quantile normalization can be used to improve the
 
 ## Differential radiomic analysis by RadAR
 
-RadAR allows the user to carry out differential radiomics analysis with aim of identifying radiomic features that better differentiate between two conditions (e.g., prognosis, molecular alterations, pathology, HPV status). To do that, RadAR implements two not-parametric tests: the Wilcoxon-Mann-Whitney (WMW or wilcox) and the Area Under the Curve (AUC).
+RadAR allows the user to carry out differential radiomics analysis with aim of identifying radiomic features better differentiating between different conditions (e.g., prognosis, molecular alterations, pathology, HPV status). RadAR implements three not-parametric tests: the Wilcoxon-Mann-Whitney (WMW or wilcox) and the Area Under the Curve (AUC) for differential analysis between two groups, while the Kruskal-Willis test can be used to perform differential analysis across multiple (n>2) groups. 
+
 In the following code, we show the utility of the `calc_differential_radiomics` to identify the radiomic features associated with patients' outcome (dead vs. alive). 
 
 
@@ -341,6 +342,35 @@ plot_features(rdr = rdr,
               conditions = colData(rdr)$deadstatus.event)
 ```
 
+In the following code, we show the utility of the `calc_differential_radiomics` to identify the radiomic features associated with cancer stage. Since this involves the comparison across n>2 classes, we will use the Kruskal-Wallis test.
+
+
+```{r}
+## Print numbers of available stage 
+table(rdr$Overall.Stage)
+## perform differential radiomic analysis among patients with  different stage of cancer
+rdr <- calc_differential_radiomics(rdr = rdr, 
+                                   conditions = rdr$Overall.Stage, 
+                                   method = "kruskal-wallis",
+                                   adjust_pvalues_by = "BH")
+
+## select top ranked features
+top_features <- select_top_features(rdr = rdr, 
+                                    which_statistics = "kruskal-wallis")
+
+## print the first top ranked features
+top_features
+
+```
+
+```{r, fig.width=7, fig.height=7}
+## plot two top-ranked features
+plot_features(rdr = rdr, 
+              feature_names = c("Sphericity.original", 
+                                "Kurtosis.wavelet.LLH"),
+              which_data = "normalized", 
+              conditions = colData(rdr)$Overall.Stage)
+```
 
 ## Unsupervised clustering of radiomic features
 
@@ -520,11 +550,12 @@ aerts_signature <- c("Energy.original",
                      "Compactness.original")
 ```
 
-We generate different radiomic signature using the methods implemented in RadAR. To make the radiomic signatures comparable each others, we used n=4 features each.
+We generate different radiomic signature using the methods implemented in RadAR.
 
 ```{r}
-## set number of features (as in Aerts et al.)
-nfeatures <- 4
+## set number of features 
+## (n=8, roughly estimated from the heat map of correlation matrix)
+nfeatures <- 8 
 
 ## generate a radiomic signature using mRMR
 rdr_mRMR <- do_feature_selection(rdr = rdr,
@@ -548,7 +579,7 @@ rdr_HC_conc <- do_feature_selection(rdr = rdr,
                                     surv_obj = surv_obj,
                                     which_data = "normal")$signature
 
-## generate a radiomic signature using HC+variability
+## generate a radiomic signature using PCA+variability
 rdr_PCA_var <- do_feature_selection(rdr = rdr,
                                     n_features = nfeatures,
                                     method = "pca",
@@ -562,6 +593,18 @@ rdr_PCA_conc <- do_feature_selection(rdr = rdr,
                                      select_by = "concordance",
                                      surv_obj = surv_obj,
                                      which_data = "scaled")$signature
+
+## generate a radiomic signature using glmnet-cox
+rdr_glmnet_cox <- do_feature_selection(rdr = lung1_rdr,
+                                       method = "glmnet-cox",
+                                       surv_obj = surv_obj,
+                                       which_data = "normal")$signature
+
+## generate a radiomic signature using glmnet-binomial
+rdr_glmnet_binomial <- do_feature_selection(rdr = lung1_rdr,
+                                            method = "glmnet-binomial",
+                                            surv_obj = surv_obj,
+                                            which_data = "normal")$signature
 
 ```
 
@@ -641,6 +684,28 @@ validation_PCA_conc <- test_radiomic_signature(rdr = hn1_rdr,
                                                surv_obj = surv_obj_hn1,
                                                which_data = "scaled")$concordance
 
+## evaluate the radiomic signature generated using glmnet-cox in training and validation datasets
+training_glmnet_cox <- test_radiomic_signature(rdr = rdr,
+                                               signature = rdr_glmnet_cox,
+                                               surv_obj = surv_obj,
+                                               which_data = "normal")$concordance
+
+validation_glmnet_cox <- test_radiomic_signature(rdr = hn1_rdr,
+                                                 signature = rdr_glmnet_cox,
+                                                 surv_obj = surv_obj_hn1,
+                                                 which_data = "normal")$concordance
+
+## evaluate the radiomic signature generated using glmnet-cox in training and validation datasets
+training_glmnet_binomial <- test_radiomic_signature(rdr = rdr,
+                                                    signature = rdr_glmnet_binomial,
+                                                    surv_obj = surv_obj,
+                                                    which_data = "normal")$concordance
+
+validation_glmnet_binomial <- test_radiomic_signature(rdr = hn1_rdr,
+                                                      signature = rdr_glmnet_binomial,
+                                                      urv_obj = surv_obj_hn1,
+                                                      which_data = "normal")$concordance
+
 ```
 
 To compare the performace of the radiomic signature reported above, we report them in a dot chart, ordering them from the best (top) to the worst (bottom) performing  signatures in the in HN1,  the validation dataset
@@ -651,7 +716,9 @@ data_signatures <- rbind(c(training_Aerts[1], validation_Aerts[1]),
                          c(training_HC_conc[1], validation_HC_conc[1]),
                          c(training_HC_var[1], validation_HC_var[1]),
                          c(training_PCA_conc[1], validation_PCA_conc[1]),
-                         c(training_PCA_var[1], validation_PCA_var[1])
+                         c(training_PCA_var[1], validation_PCA_var[1]),
+                         c(training_glmnet_cox[1], validation_glmnet_cox[1]),
+                         c(training_glmnet_binomial[1], training_glmnet_binomial[1])
                          )
 
 rownames(data_signatures) <- c("Aerts et al. (2014)", 
@@ -659,10 +726,12 @@ rownames(data_signatures) <- c("Aerts et al. (2014)",
                                "HC+concordance", 
                                "HC+variability", 
                                "PCA+concordance", 
-                               "PCA+variability")
+                               "PCA+variability",
+                               "glmnet-cox",
+                               "glmnet-binomial")
 
-colnames(data_signatures) <- c("Training", 
-                               "Validation")
+colnames(data_signatures) <- c("Training (Lung1)", 
+                               "Validation (HN1)")
 
 data_signatures <- data_signatures[order(data_signatures[, 2], decreasing = T), ]
 

@@ -98,13 +98,13 @@ do_hierarchical_clustering <- function(rdr = NULL,
 #'
 #' @param rdr A RadAR object (class \code{\link{SummarizedExperiment}}).
 #' @param conditions (numeric, character) Vector of labels for each sample in rdr. Should have the same
-#' length of \code{ncol(rdr)}. Feature values will be grouped based on this. Required.
+#' length of \code{ncol(rdr)}. Required.
 #' @param which_data (character) Which data use for plot. It can be one of the following: "normal", "scaled", "normalized".
-#' @param method (character) Which statistical methods use for differential analysis. It can be "wilcox" (Wilcoxon-Mann-Whitney)
-#'  or "auc" (Area Under the Curve).
+#' @param method (character) Which statistical methods use for differential analysis.
+#' It can be "wilcox" (Wilcoxon-Mann-Whitney), "auc" (Area Under the Curve) or "kruskal-wallis".
 #' @param adjust_pvalues_by (character) Which method use to correct p-values from wilcox test. Print available methods by
 #' \code{\link{p.adjust.methods}}.
-#' @param thr_pvalue (numeric) P-value threshold to identify statistically significant features.
+#' @param thr_pvalue (numeric) P-value threshold to identify statistically significant features for wilcox or kruskal-wallis.
 #' It should be in the range (0, 1].
 #' @param thr_auc (numeric) AUC threshold to identify statistically significant features.
 #' It should be in the range (0.5,1].
@@ -124,20 +124,21 @@ calc_differential_radiomics <- function(rdr = NULL,
 
 {
 
-  assertthat::assert_that(length(rdr) > 0, msg = "[RadAR] Error: rdr object required")
+  assertthat::assert_that(length(rdr) > 0,
+                          msg = "[RadAR] Error: rdr object required")
   if (!is.na(thr_pvalue)) {
-    assertthat::assert_that(thr_pvalue > 0, msg = "[RadAR] Error: thr_pvalue should be positive")
+    assertthat::assert_that(thr_pvalue > 0,
+                            msg = "[RadAR] Error: thr_pvalue should be positive")
   }
   if (!is.na(thr_auc)) {
-    assertthat::assert_that(thr_auc > 0.5 & thr_auc <= 1, msg = "[RadAR] Error: thr_auc should be in the range (0.5,1]")
+    assertthat::assert_that(thr_auc > 0.5 & thr_auc <= 1,
+                            msg = "[RadAR] Error: thr_auc should be in the range (0.5,1]")
   }
-  assertthat::assert_that(length(conditions) == ncol(rdr), msg = "[RadAR] Error: conditions need to be specified and should be a vector of length ncol(rdr)")
-  assertthat::assert_that(which_data %in% c("normal", "scaled", "normalized"), msg = "[RadAR] Error: Invalid data type")
-  assertthat::assert_that(length(unique(conditions)) == 2 |
-                            (length(unique(conditions)) == 3 & any(is.na(unique(conditions)))),
-                          msg = "[RadAR] Error: two conditions should be indicated (test vs ctrl)")
-
-  assertthat::assert_that(method %in% c("wilcox", "auc"),
+  assertthat::assert_that(length(conditions) == ncol(rdr),
+                          msg = "[RadAR] Error: conditions need to be specified and should be a vector of length ncol(rdr)")
+  assertthat::assert_that(which_data %in% c("normal", "scaled", "normalized"),
+                          msg = "[RadAR] Error: Invalid data type")
+  assertthat::assert_that(method %in% c("wilcox", "auc", "kruskal-wallis"),
                           msg = "[RadAR] Error: invalid method to perform differential statistics")
 
   if (which_data == "normal") {
@@ -151,49 +152,85 @@ calc_differential_radiomics <- function(rdr = NULL,
     data <- rdr@assays$data$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: feature values have not been yet normalized")
   }
-  unique_conditions <- unique(conditions)
-  median_cond1 <- apply(data[, which(conditions == unique_conditions[1])], 1, median, na.rm = T)
-  median_cond2 <- apply(data[, which(conditions == unique_conditions[2])], 1, median, na.rm = T)
 
-  if (method == "wilcox") {
+  if (method %in% c("wilcox", "auc")) {
+
+    assertthat::assert_that(length(unique(conditions)) == 2 |
+                              (length(unique(conditions)) == 3 & any(is.na(unique(conditions)))),
+                            msg = "[RadAR] Error: two conditions should be indicated (test vs ctrl)")
+
+    unique_conditions <- unique(conditions)
+    if (any(is.na(unique_conditions))) {
+      unique_conditions <- unique_conditions[-which(is.na(unique_conditions))]
+    }
+
+    median_cond1 <- apply(data[, which(conditions == unique_conditions[1])], 1, median, na.rm = T)
+    median_cond2 <- apply(data[, which(conditions == unique_conditions[2])], 1, median, na.rm = T)
+
+    if (method == "wilcox") {
+      assertthat::assert_that(adjust_pvalues_by %in% p.adjust.methods,
+                              msg = "[RadAR] Invalid method for adjusting p-values")
+      pvalues <- apply(data, 1, calc_wilcox, conditions)
+      adjusted_pvalues <- p.adjust(pvalues, method = adjust_pvalues_by)
+      rowData(rdr)$wilcox_test_pvalue <- adjusted_pvalues
+      rdr@metadata$which_data_wilcox <- which_data
+      rdr@metadata$conditions_wilcox <- conditions
+
+      if (!is.na(thr_pvalue)) {
+        ix_features <- which(rowData(rdr)$wilcox_test_pvalue <= thr_pvalue  )
+        if (length(ix_features) == 0) {
+          message("Warning: [RadAR] No statistically significant features found")
+        }
+        flag_condition <- rep("", nrow(rdr))
+        flag_condition[which(median_cond1 > median_cond2 &
+                               adjusted_pvalues <= thr_pvalue)] <- paste("Higher in", unique_conditions[1])
+        flag_condition[which(median_cond2 > median_cond1 &
+                               adjusted_pvalues <= thr_pvalue)] <- paste("Higher in", unique_conditions[2])
+        rowData(rdr)$wilcox_test_description <- flag_condition
+      }
+    }
+
+    if (method == "auc") {
+      auc <- apply(data, 1, calc_auc, conditions)
+      rowData(rdr)$auc_value <- auc
+      rdr@metadata$which_data_auc <- which_data
+      rdr@metadata$conditions_auc <- conditions
+      if (!is.na(thr_auc)) {
+        ix_features <- which(rowData(rdr)$auc_value >= thr_auc | rowData(rdr)$auc_value <= (1-thr_auc) )
+        if (length(ix_features) == 0) {
+          message("Warning: [RadAR] No statistically significant features found")
+        }
+        flag_condition <- rep("", nrow(rdr))
+        flag_condition[which(auc >= thr_auc)] <- paste("Higher in", unique_conditions[1])
+        flag_condition[which(auc <= (1-thr_auc) )] <- paste("Higher in", unique_conditions[2])
+        rowData(rdr)$auc_description <- flag_condition
+      }
+    }
+  }
+
+  if (method == "kruskal-wallis") {
+    assertthat::assert_that(length(unique(conditions)) > 2 |
+                              (length(unique(conditions)) > 3 & any(is.na(unique(conditions)))),
+                            msg = "[RadAR] Error: at least three conditions should be indicated (test vs ctrl)")
+
     assertthat::assert_that(adjust_pvalues_by %in% p.adjust.methods,
                             msg = "[RadAR] Invalid method for adjusting p-values")
-    pvalues <- apply(data, 1, calc_wilcox, conditions)
+
+    pvalues <- apply(data, 1, calc_kruskal_wallis, conditions)
     adjusted_pvalues <- p.adjust(pvalues, method = adjust_pvalues_by)
-    rowData(rdr)$wilcox_test_pvalue <- adjusted_pvalues
-    rdr@metadata$which_data_wilcox <- which_data
-    rdr@metadata$conditions_wilcox <- conditions
+    rowData(rdr)$kruskal_wallis_test_pvalue <- adjusted_pvalues
+    rdr@metadata$which_data_kruskal_wallis <- which_data
+    rdr@metadata$conditions_kruskal_wallis <- conditions
 
     if (!is.na(thr_pvalue)) {
-      ix_features <- which(rowData(rdr)$wilcox_test_pvalue <= thr_pvalue  )
+      ix_features <- which(rowData(rdr)$kruskal_wallis_test_pvalue <= thr_pvalue  )
       if (length(ix_features) == 0) {
         message("Warning: [RadAR] No statistically significant features found")
       }
-      flag_condition <- rep("", nrow(rdr))
-      flag_condition[which(median_cond1 > median_cond2 &
-                             adjusted_pvalues <= thr_pvalue)] <- paste("Higher in", unique(conditions)[1])
-      flag_condition[which(median_cond2 > median_cond1 &
-                             adjusted_pvalues <= thr_pvalue)] <- paste("Higher in", unique(conditions)[2])
-      rowData(rdr)$wilcox_test_description <- flag_condition
     }
   }
 
-  if (method == "auc") {
-    auc <- apply(data, 1, calc_auc, conditions)
-    rowData(rdr)$auc_value <- auc
-    rdr@metadata$which_data_auc <- which_data
-    rdr@metadata$conditions_auc <- conditions
-    if (!is.na(thr_auc)) {
-      ix_features <- which(rowData(rdr)$auc_value >= thr_auc | rowData(rdr)$auc_value <= (1-thr_auc) )
-      if (length(ix_features) == 0) {
-        message("Warning: [RadAR] No statistically significant features found")
-      }
-      flag_condition <- rep("", nrow(rdr))
-      flag_condition[which(auc >= thr_auc)] <- paste("Higher in", unique(conditions)[1])
-      flag_condition[which(auc <= (1-thr_auc) )] <- paste("Higher in", unique(conditions)[2])
-      rowData(rdr)$auc_description <- flag_condition
-    }
-  }
+
   return (rdr)
 
 }
@@ -201,6 +238,11 @@ calc_differential_radiomics <- function(rdr = NULL,
 
 calc_wilcox <- function(x, conditions) {
   y <- wilcox.test(x ~ conditions)
+  return (y$p.value)
+}
+
+calc_kruskal_wallis <- function(x, conditions) {
+  y <- kruskal.test(x ~ conditions)
   return (y$p.value)
 }
 
@@ -217,7 +259,7 @@ calc_auc <- function(x, conditions) {
 #' @param rdr A RadAR object (class \code{\link{SummarizedExperiment}}).
 #' @param which_statistics (character) Select top features based on one of the following pre-computed statistics:
 #' "wilcox", "AUC", "concordance" or "cox".
-#' @param thr_pvalue_wilcox (numeric) P-value threshold to identify statistically significant features from wilcox.
+#' @param thr_pvalue (numeric) P-value threshold to identify statistically significant features from wilcox.
 #' It should be in the range (0, 1].
 #' @param thr_auc (numeric) AUC threshold to identify statistically significant features from AUC
 #' It should be in the range (0.5, 1].
@@ -234,7 +276,7 @@ calc_auc <- function(x, conditions) {
 #' @examples
 select_top_features  <- function(rdr = NULL,
                                  which_statistics = "wilcox",
-                                 thr_pvalue_wilcox = 5e-2,
+                                 thr_pvalue = 5e-2,
                                  thr_auc = .8,
                                  thr_concordance = 0.10,
                                  thr_cox_zvalue = 3,
@@ -244,28 +286,42 @@ select_top_features  <- function(rdr = NULL,
 {
 
   assertthat::assert_that(length(rdr) > 0, msg = "[RadAR] Error: rdr object required")
-  assertthat::assert_that(thr_pvalue_wilcox > 0, msg = "[RadAR] Error: thr_pvalue_wilcox should be positive")
+  assertthat::assert_that(thr_pvalue > 0, msg = "[RadAR] Error: thr_pvalue_wilcox should be positive")
   assertthat::assert_that(thr_cox_zvalue > 0, msg = "[RadAR] Error: thr_cox_zvalue should be positive")
   assertthat::assert_that(thr_auc > 0.5 & thr_auc <= 1, msg = "[RadAR] Error: auc_thr should be in the range (0.5,1]")
   assertthat::assert_that(thr_concordance > 0 & thr_concordance < 0.5, msg = "[RadAR] Error: thr_concordance should be in the range (0, .5)")
   assertthat::assert_that(length(which_statistics) == 1, msg = "[RadAR] Error: Only one statistics should be indicated")
-  assertthat::assert_that(which_statistics %in% c("wilcox", "auc", "concordance", "cox"), msg = "[RadAR] Error: Invalid statistcs")
+  assertthat::assert_that(which_statistics %in% c("wilcox", "auc", "concordance", "cox", "kruskal-wallis"),
+                          msg = "[RadAR] Error: Invalid statistcs")
 
+  if (which_statistics == "kruskal-wallis") {
+    which_statistics <- "kruskal_wallis"
+  }
   which_data_wilcox <- metadata(rdr)$which_data_wilcox
   which_data_auc <- metadata(rdr)$which_data_auc
   which_data_cox <- metadata(rdr)$which_data_cox
   which_data_concordance <- metadata(rdr)$which_data_concordance
+  which_data_kruskal_wallis <- metadata(rdr)$which_data_kruskal_wallis
 
   conditions_wilcox <- rdr@metadata$conditions_wilcox
   conditions_auc <- rdr@metadata$conditions_auc
+  conditions_kruskal_wallis <- rdr@metadata$conditions_wilcox
 
   which_data <- get(paste0("which_data", "_", which_statistics))
 
   if (which_statistics == "wilcox") {
-    assertthat::assert_that(any("wilcox_test_pvalue" %in% colnames(rowData(rdr))), msg = "[RadAR] Error: Wilcox-Mann-Whitney test has not been yet computed")
+    assertthat::assert_that(any("wilcox_test_pvalue" %in% colnames(rowData(rdr))),
+                            msg = "[RadAR] Error: Wilcox-Mann-Whitney test has not been yet computed")
+    thr_pvalue_wilcox <- thr_pvalue
   }
   if (which_statistics == "auc") {
-    assertthat::assert_that(any("auc_value" %in% colnames(rowData(rdr))), msg = "[RadAR] Error: AUC test has not been yet computed")
+    assertthat::assert_that(any("auc_value" %in% colnames(rowData(rdr))),
+                            msg = "[RadAR] Error: AUC test has not been yet computed")
+  }
+  if (which_statistics == "kruskal_wallis") {
+    assertthat::assert_that(any("kruskal_wallis_test_pvalue" %in% colnames(rowData(rdr))),
+                            msg = "[RadAR] Error: Kruskal-Wallis test has not been yet computed")
+
   }
 
   if (which_data == "normal") {
@@ -273,16 +329,21 @@ select_top_features  <- function(rdr = NULL,
   }
   if (which_data == "scaled") {
     data <- rdr@assays$data$scaled_values
-    assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been scaled yet")
+    assertthat::assert_that(!is.null(data),
+                            msg = "[RadAR] Error: Feature values have not been scaled yet")
   }
   if (which_data == "normalized") {
     data <- rdr@assays$data$norm_values
-    assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been normalized yet")
+    assertthat::assert_that(!is.null(data),
+                            msg = "[RadAR] Error: Feature values have not been normalized yet")
   }
 
   if (which_statistics %in% c("wilcox", "auc")) {
     conditions <- get(paste0("conditions", "_", which_statistics))
     unique_conditions <- unique(conditions)
+    if (any(is.na(unique_conditions))) {
+      unique_conditions <- unique_conditions[-which(is.na(unique_conditions))]
+    }
     median_cond1 <- apply(data[, which(conditions == unique_conditions[1])], 1, median, na.rm = T)
     median_cond2 <- apply(data[, which(conditions == unique_conditions[2])], 1, median, na.rm = T)
   }
@@ -293,9 +354,9 @@ select_top_features  <- function(rdr = NULL,
     assertthat::assert_that(length(ix_features) > 0, msg = "[RadAR] Error: No statistically significant features found")
     flag_condition <- rep("", nrow(rdr))
     flag_condition[which(median_cond1 > median_cond2 &
-                           rowData(rdr)$wilcox_test_pvalue <= thr_pvalue_wilcox)] <- paste("Higher in", unique(conditions)[1])
+                           rowData(rdr)$wilcox_test_pvalue <= thr_pvalue_wilcox)] <- paste("Higher in", unique_conditions[1])
     flag_condition[which(median_cond2 > median_cond1 &
-                           rowData(rdr)$wilcox_test_pvalue <= thr_pvalue_wilcox)] <- paste("Higher in", unique(conditions)[2])
+                           rowData(rdr)$wilcox_test_pvalue <= thr_pvalue_wilcox)] <- paste("Higher in", unique_conditions[2])
 
     df_top_features <- data.frame(feature_name = rowData(rdr)$feature_name[ix_features],
                                   image_type = rowData(rdr)$image_type[ix_features],
@@ -318,8 +379,10 @@ select_top_features  <- function(rdr = NULL,
     assertthat::assert_that(length(ix_features) > 0, msg = "[RadAR] Error: No statistically significant features found")
 
     flag_condition <- rep("", nrow(rdr))
-    flag_condition[which(rowData(rdr)$auc_value >= thr_auc)] <- paste("Higher in", unique(conditions)[1])
-    flag_condition[which(rowData(rdr)$auc_value <= (1-thr_auc) )] <- paste("Higher in", unique(conditions)[2])
+    flag_condition[which(median_cond1 > median_cond2 &
+                           abs(rowData(rdr)$auc_value-0.5) > (thr_auc-0.5))] <- paste("Higher in", unique_conditions[1])
+    flag_condition[which(median_cond2 > median_cond1 &
+                           abs(rowData(rdr)$auc_value-0.5) > (thr_auc-0.5))] <- paste("Higher in", unique_conditions[2])
 
     df_top_features <- data.frame(feature_name = rowData(rdr)$feature_name[ix_features],
                                   image_type = rowData(rdr)$image_type[ix_features],
@@ -336,6 +399,21 @@ select_top_features  <- function(rdr = NULL,
     df_top_features <- df_top_features[order(abs(df_top_features$statistics-0.5), decreasing = T), ]
   }
 
+  if (which_statistics == "kruskal_wallis") {
+
+    ix_features <- which(rowData(rdr)$kruskal_wallis_test_pvalue <= thr_pvalue)
+    assertthat::assert_that(length(ix_features) > 0,
+                            msg = "[RadAR] Error: No statistically significant features found")
+
+    df_top_features <- data.frame(feature_name = rowData(rdr)$feature_name[ix_features],
+                                  image_type = rowData(rdr)$image_type[ix_features],
+                                  feature_type = rowData(rdr)$feature_type[ix_features],
+                                  feature_description = rowData(rdr)$feature_description[ix_features],
+                                  statistics = rowData(rdr)$kruskal_wallis_test_pvalue[ix_features]
+    )
+    rownames(df_top_features) <- rownames(rdr)[ix_features]
+    df_top_features <- df_top_features[order(df_top_features$statistics), ]
+  }
   if (which_statistics == "concordance") {
 
     ix_features <- which(abs(rowData(rdr)$concordance_index - 0.5) >= thr_concordance  )
@@ -350,7 +428,6 @@ select_top_features  <- function(rdr = NULL,
                                   feature_type = rowData(rdr)$feature_type[ix_features],
                                   feature_description = rowData(rdr)$feature_description[ix_features],
                                   statistics = rowData(rdr)$concordance_index[ix_features],
-                                  statistics_description = flag_condition[ix_features]
     )
     rownames(df_top_features) <- rownames(rdr)[ix_features]
     df_top_features <- df_top_features[order(abs(df_top_features$statistics-0.5), decreasing = T), ]
@@ -379,7 +456,7 @@ select_top_features  <- function(rdr = NULL,
   if (!is.null(write_to)) {
     write.table(df_top_features, file = write_to, quote = F, row.names = F, sep ="\t")
   }
-  df_top_features <- tibble::as.tibble(df_top_features)
+  df_top_features <- tibble::as_tibble(df_top_features)
   return (df_top_features)
 
 }
@@ -539,7 +616,10 @@ calc_cox_regression <- function(rdr = NULL,
 #' @param which_data (character) Which data use to compute concordance index. It can be one of the following: "normal",
 #' "scaled", "normalized".
 #'
-#' @return An updated (reduced) rdr (a RadAR object)
+#' @return In case of mRMR, hcl and pca methods, the function returns the results of the cox regression model, including the concordance index.
+#' In case of glmnet-cox method, the function returns a list of two elements, including 1) the prediction of the glmnet model on the new data
+#' and 2) the computation of concordance index.
+#'
 #' @author Matteo Benelli (\email{matteo.benelli@uslcentro.toscana.it})
 #' @export
 #'
@@ -575,21 +655,43 @@ test_radiomic_signature <- function(rdr = NULL,
 
   data_sign <- data[signature, ]
 
-  res <- summary(coxph(surv_obj ~ t(data_sign)))
+  if (metadata(rdr)$glmnet_model == F) {
+    res <- summary(coxph(surv_obj ~ t(data_sign)))
+  } else {
+    if (metadata(rdr)$glmnet_model_lambda == "min") {
+      my_s <- "lambda.min"
+    } else {
+      my_s <- "lambda.1se"
+    }
+    cvfit <- metadata(rdr)$glmnet_model
+    res <- list()
+    res$pred <- predict(cvfit,
+                        newx = t(data),
+                        s = my_s,
+                        type = "response")
 
+    res$CI <- Cindex(pred = res$pred,
+                     y = surv_obj)
+
+  }
   return(res)
 }
 
 #' Perform feature selection based on different methods
 #'
-#' This function implements different methods to perform feature selection of radiomic datasets
+#' This function implements different methods to perform feature selection of radiomic datasets.
 #'
 #' @param rdr A RadAR object (class \code{\link{SummarizedExperiment}}).
 #' @param n_features (numeric) Number of features to be selected. Required.
 #' @param select_by (character) Which criteria use to select informative radiomic features within clusters
 #' of similar (i.e., redundant) features. It can be one of the following: "variability", "random", "concordance".
 #' @param method (character) Which  method use to identify redundant features. It can be one of the following:
-#' "mRMR" (minimum-redundancy-maximum-relevance),"hcl" (hierarchical clustering of correlation matrix) or "pca" (K-means applied to Principal Component Analysis).
+#' "mRMR" (minimum-redundancy-maximum-relevance),"hcl" (hierarchical clustering of correlation matrix), "pca" (K-means applied to Principal Component Analysis),
+#' "glmnet-cox" (generalized linear model via penalized maximum likelihood (glmnet) fitting cox regression model),
+#' "glmnet-binonmial" (glmnet fitting binomial regression model),
+#' Using mRMR, this function works as a wrapper to \code{\link{mRMR}} package.
+#' Using glmnet-*, this function works as a wrapper to \code{\link{glmnet}} package.
+#'
 #' @param surv_obj An object of class \code{\link{Surv}}. Required if select_by is "concordance".
 #' @param which_data (character) Which data use to compute concordance index. It can be one of the following: "normal",
 #' "scaled", "normalized".
@@ -598,7 +700,12 @@ test_radiomic_signature <- function(rdr = NULL,
 #' @param min_features_per_group (numeric) Minimum number of features for each cluster.
 #' @param thr_pca_cum_prop (numeric) Threshold to select number of components based on
 #' cumulative proportion of explained variance criterion.
-#' @param response (numeric) A response variable, required if mRMR method is used.
+#' @param response (numeric) A response variable, required if any of mRMR or glmnet-binomial or
+#' methods are used.
+#' @param lambda (character) In glmnet, it controls the overall strength of the penalty.
+#' Possible values are "min" or "1se" (1 standard deviation). For more details see \code{\link{glmnet}}
+#' @param alpha (numeric) In glmnet, it controls elastic-net penalty.
+#' Typical values are 0 (ridge) or 1 (lasso). For more details see \code{\link{glmnet}}.
 #'
 #' @return A list including two elements:
 #' `rdr`: the updated (reduced) rdr (a RadAR object)
@@ -616,29 +723,44 @@ do_feature_selection <- function(rdr = NULL,
                                  corr_measure = "pearson",
                                  min_features_per_group = 5,
                                  thr_pca_cum_prop = .8,
-                                 response = NULL
+                                 response = NULL,
+                                 lambda = "min",
+                                 alpha = NULL
 )
 {
+  set.seed(1)
   assertthat::assert_that(length(rdr) > 0, msg = "[RadAR] rdr object required")
-  assertthat::assert_that(length(n_features) == 1, msg = "[RadAR] n_features required")
-  assertthat::assert_that(min_features_per_group > 0 & min_features_per_group < (nrow(rdr)-n_features) ,
-                          msg = "[RadAR] min_features_per_group should be in the range [1, (total features - n_features)]")
   assertthat::assert_that(which_data %in% c("normal", "scaled", "normalized"), msg = "[RadAR] Invalid data type")
   assertthat::assert_that(corr_measure %in% c("pearson", "kendall", "spearman"), msg = "[RadAR] Invalid corr_measure setting")
   assertthat::assert_that(length(method) > 0 , msg = "[RadAR] method required")
-  assertthat::assert_that(method %in% c("hcl", "pca", "mRMR") , msg = "[RadAR] Invalid method")
-  assertthat::assert_that(thr_pca_cum_prop > 0 & thr_pca_cum_prop <= 1,
-                          msg = "[RadAR] Threshold for PCA for features clustering")
+  assertthat::assert_that(method %in% c("hcl", "pca", "mRMR",
+                                        "glmnet-cox", "glmnet-binomial") ,
+                          msg = "[RadAR] Invalid method")
 
+  if (method %in% c("hcl", "pca", "mRMR")) {
+    assertthat::assert_that(min_features_per_group > 0 & min_features_per_group < (nrow(rdr)-n_features) ,
+                            msg = "[RadAR] min_features_per_group should be in the range [1, (total features - n_features)]")
+    assertthat::assert_that(length(n_features) == 1, msg = "[RadAR] n_features required for methods hcl, pca or mRMR")
 
-  if (method != "mRMR") {
-  assertthat::assert_that(length(select_by) > 0 , msg = "[RadAR] select_by required")
-  assertthat::assert_that(select_by %in% c("variability", "random", "concordance"), msg = "[RadAR] Invalid method for feature prioritization")
+  }
+
+  if (method %in% c("mRMR", "glmnet-cox", "glmnet-binomial") == F) {
+    assertthat::assert_that(length(select_by) > 0 , msg = "[RadAR] select_by required")
+    assertthat::assert_that(select_by %in% c("variability", "random", "concordance"), msg = "[RadAR] Invalid method for feature prioritization")
   }
   if (method == "mRMR") {
     assertthat::assert_that(length(response) > 0, msg = "[RadAR] Error: For mRMR a response variable is required")
     assertthat::assert_that(length(response) == ncol(rdr), msg = "[RadAR] Error: Response variable should have same length of ncol(rdr)")
-    assertthat::assert_that(length(unique(response)) == 2, msg = "[RadAR] Error: Response variable should have have two states")
+    assertthat::assert_that(length(unique(response)) == 2, msg = "[RadAR] Error: Response variable should have two states")
+    select_by <- "none"
+  }
+  if (method %in% c("glmnet-cox", "glmnet-binomial")) {
+    if (length(alpha) > 0) {
+      assertthat::assert_that(alpha >= 0 & alpha <= 1,
+                              msg = "[RadAR] Invalid value for alpha. It should be in the range [0, 1].")
+    }
+    assertthat::assert_that(lambda %in% c("min", "1se"),
+                            msg = "[RadAR] Invalid value for lamba. It should min or 1se.")
     select_by <- "none"
   }
   if (select_by == "interpretability" ) {
@@ -646,6 +768,16 @@ do_feature_selection <- function(rdr = NULL,
   }
   if (select_by == "concordance") {
     assertthat::assert_that(length(surv_obj) > 0, msg = "[RadAR] Error: For concordance a surv_obj is required")
+  }
+  if (method == "glmnet-cox") {
+    assertthat::assert_that(length(surv_obj) > 0, msg = "[RadAR] Error: For glmnet-cox a surv_obj is required")
+  }
+  if (method %in% c("glmnet-binomial")) {
+    assertthat::assert_that(length(response) > 0, msg = "[RadAR] Error: For glmnet-binomial a response variable is required")
+    assertthat::assert_that(length(response) == ncol(rdr), msg = "[RadAR] Error: Response variable should have same length of ncol(rdr)")
+    assertthat::assert_that(length(unique(response)) == 2 |
+                              (length(unique(response)) == 3 & any(is.na(unique(response)))),
+                            msg = "[RadAR] Error: Response variable should have two states")
   }
 
   if (which_data == "normal") {
@@ -659,6 +791,22 @@ do_feature_selection <- function(rdr = NULL,
     data <- rdr@assays$data$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
+
+  if (method %in% c("mRMR", "glmnet-binomial")) {
+    if(any(is.na(response))) {
+      ixna <- which(is.na(response))
+      response <- response[-ixna]
+      data <- data[, -ixna]
+    }
+  }
+  if (method == "glmnet-cox" | select_by == "concordance") {
+    if(any(is.na(surv_obj[, 1]))) {
+      ixna <- which(is.na(surv_obj[, 1]))
+      surv_obj <- surv_obj[-ixna, ]
+      data <- data[, -ixna]
+    }
+  }
+
 
   if (method == "hcl") {
     dist_row <- as.dist( 1- cor(t(data), use = "na", method = corr_measure))
@@ -714,21 +862,92 @@ do_feature_selection <- function(rdr = NULL,
       }
     }
   }
-if (method == "mRMR") {
-  mrmr_in_data <- t(rbind(data, response))
-  mrmr_data <- mRMRe::mRMR.data(data = data.frame(mrmr_in_data))
-  mrmr_res <- mRMRe::mRMR.classic("mRMRe.Filter", data = mrmr_data,
-                                  target_indices = ncol(mrmr_in_data),
-                                  feature_count = n_features)
-  ix_features <- as.numeric(unlist(solutions(mrmr_res)))
-  sel_features <- rownames(rdr)[ix_features]
-}
+  if (method == "mRMR") {
+    mrmr_in_data <- t(rbind(data, response))
+    mrmr_data <- mRMRe::mRMR.data(data = data.frame(mrmr_in_data))
+    mrmr_res <- mRMRe::mRMR.classic("mRMRe.Filter", data = mrmr_data,
+                                    target_indices = ncol(mrmr_in_data),
+                                    feature_count = n_features)
+    ix_features <- as.numeric(unlist(solutions(mrmr_res)))
+    sel_features <- rownames(rdr)[ix_features]
+  }
+
+  if (method == "glmnet-cox") {
+    if (lambda == "min") {
+      my_s <- "lambda.min"
+    } else {
+      my_s <- "lambda.1se"
+    }
+    if (length(alpha) > 0) {
+      cvfit <- cv.glmnet(x = t(data),
+                         y = surv_obj, family = "cox",
+                         alpha = alpha)
+    } else {
+      cvfit <- cv.glmnet(x = t(data),
+                         y = surv_obj,
+                         family = "cox")
+    }
+    coef.min <- coef(cvfit, s = my_s)
+    cf <- as.matrix(coef(cvfit, s = my_s))
+    res <- cf[which(cf!=0), ]
+    if (any(names(res) == "(Intercept)")) {
+      res <- res[-which(names(res) == "(Intercept)")]
+    }
+    if (length(res) > 0) {
+      message(paste("[RadAR]", "n=", length(res), "features selected with glmnet"))
+    } else {
+      assertthat::assert_that(1 < 0,
+                              msg = "[RadAR] Error: No features selected with glmnet. Try changing lambda and/or alpha parameters.")
+    }
+    ix_features <- which(rownames(rdr) %in% names(res))
+    sel_features <- names(res)
+  }
+
+  if (method == "glmnet-binomial") {
+    if (lambda == "min") {
+      my_s <- "lambda.min"
+    } else {
+      my_s <- "lambda.1se"
+    }
+    if (length(alpha) > 0) {
+      cvfit <- cv.glmnet(x = t(data),
+                         y = response,
+                         family = "binomial",
+                         alpha = alpha)
+    } else {
+      cvfit <- cv.glmnet(x = t(data),
+                         y = response,
+                         family = "binomial")
+    }
+    coef.min <- coef(cvfit, s = my_s)
+    cf <- as.matrix(coef(cvfit, s = my_s))
+    res <- cf[which(cf!=0), ]
+    if (any(names(res) == "(Intercept)")) {
+      res <- res[-which(names(res) == "(Intercept)")]
+    }
+    if (length(res) > 0) {
+      message(paste("[RadAR]", "n=", length(res), "features selected with glmnet"))
+    } else {
+      assertthat::assert_that(1 < 0,
+                              msg = "[RadAR] Error: No features selected with glmnet. Try changing lambda and/or alpha parameters.")
+    }
+    ix_features <- which(rownames(rdr) %in% names(res))
+    sel_features <- names(res)
+  }
+
 
   message(paste("[RadAR]", "Selected features are:", toString(sel_features)))
   rdr <- rdr[sel_features, ]
   metadata(rdr)$feature_selection_method <- method
   metadata(rdr)$feature_selection_selectby <- select_by
   metadata(rdr)$feature_selection_which_data <- which_data
+  if (method %in% c("glmnet-cox", "glmnet-binomial")) {
+    metadata(rdr)$glmnet_model <- cvfit
+    metadata(rdr)$glmnet_model_lambda <- lambda
+  } else {
+    metadata(rdr)$glmnet_model <- F
+    metadata(rdr)$glmnet_model_lambda <- NULL
+  }
   out <- list()
   out$rdr <- rdr
   out$signature <- rownames(rdr)
