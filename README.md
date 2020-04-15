@@ -9,7 +9,7 @@ The quantitative analysis of biomedical images, referred to as Radiomics, is eme
 Here, we present RadAR (Radiomics Analysis with R), a new software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements multiple statistical methods for the analysis of these data. We used RadAR to analyse the radiomic profiles of more than 500 cancer patients from publicly available datasets and showed that it was able to recapitulate expected results, demonstrating its reliability and proving that RadAR may represent a valuable tool for the radiomic community.
 
 ## Installation
-RadAR  is freely available under GPL-3 license at  <https://github.com/cgplab/RadAR>. 
+RadAR  is freely available under MIT license at  <https://github.com/cgplab/RadAR>. 
 First, install biocViews to facilitate the installation of the package dependecies:
 
 ```{r, eval=FALSE}
