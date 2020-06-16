@@ -12,10 +12,10 @@ test_radiomic_signature(rdr = NULL, surv_obj = NULL,
 
 \item{surv_obj}{An object of class \code{\link{Surv}}.}
 
-\item{signature}{(character) vector of radiomic features defining the signature}
+\item{signature}{(character) vector of radiomic features defining the signature.}
 
 \item{signature_rdr}{RadAR object (class \code{\link{SummarizedExperiment}}) obtained by
-\code{\link{do_feature_selection}}. Required for signatures generated using
+\code{\link{do_feature_selection}}. Required to test a model generated using
  glmnet-cox or glmnet-binom.}
 
 \item{which_data}{(character) Which data use to compute concordance index. It can be one of the following: "normal",
