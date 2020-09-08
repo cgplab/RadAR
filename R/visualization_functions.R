@@ -55,14 +55,14 @@ plot_heatmap_hcl <- function(rdr = NULL,
                           msg = "[RadAR] Error: hierarchical clustering has not been yet computed")
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
 
@@ -157,14 +157,13 @@ plot_correlation_matrix <- function(rdr = NULL,
                                          power = 2)
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
   res <- cor(t(data), method = method_correlation, use = "na")
@@ -251,14 +250,14 @@ plot_features <- function(rdr = NULL,
   }
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
 

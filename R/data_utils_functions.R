@@ -21,7 +21,7 @@ find_feature_outliers <- function(rdr = NULL,
   assertthat::assert_that(length(rdr) > 0, msg = "[RadAR] rdr object required")
   assertthat::assert_that(replace_with %in% c("NA", "mean", "median"), msg = "[RadAR] Invalid replacement rule for outliers")
   method <- "IQR"
-  data <- rdr@assays$data$values
+  data <- assays(rdr)$values
   mean_data <- apply(data, 1, mean, na.rm = T)
   median_data <- apply(data, 1, median, na.rm = T)
   tot_outl <- c()
@@ -66,7 +66,7 @@ find_outliers <- function(rdr = NULL,
   assertthat::assert_that(length(fraction_outliers) > 0, msg = "[RadAR] fraction_outliers parameter should be defined")
   assertthat::assert_that(fraction_outliers > 0 & fraction_outliers <= 1, msg = "[RadAR] fraction_outliers parameter should be in the range (0, 1]")
   method <- "IQR"
-  data <- rdr@assays$data$values
+  data <- assays(rdr)$values
   outl <- vector("list", length = nrow(data))
   outl_samples <- c()
   if (method == "IQR") {
@@ -110,13 +110,13 @@ normalize_feature_values <- function(rdr = NULL,
   assertthat::assert_that(which_data %in% c("normal", "scaled"),
                           msg = "[RadAR] Invalid value for variable which_data")
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
   }
   data <- t(limma::normalizeQuantiles(t(data)))
-  rdr@assays$data$norm_values <- data
+  assays(rdr)$norm_values <- data
   return(rdr)
 }
 
@@ -139,7 +139,7 @@ scale_feature_values <- function(rdr = NULL,
   assertthat::assert_that(length(rdr) > 0, msg = "[RadAR] Error: rdr object required")
   assertthat::assert_that(method %in% c("minmax", "median"),
                           msg = "[RadAR] Error: Invalid method for scaling feature values")
-  data <- rdr@assays$data$values
+  data <- assays(rdr)$values
   if (method == "minmax") {
     range_features <- apply(data, 1, range, na.rm = T)
     data <- (data - range_features[1,])/ ( range_features[2,] -  range_features[1,])
@@ -148,7 +148,7 @@ scale_feature_values <- function(rdr = NULL,
     median_data <- apply(data, 1, median, na.rm = T)
     data <- data - median_data
   }
-  rdr@assays$data$scaled_values <- data
+  assays(rdr)$scaled_values <- data
   return(rdr)
 }
 

@@ -54,14 +54,14 @@ do_hierarchical_clustering <- function(rdr = NULL,
   assertthat::assert_that(method_hcl_col %in% methods_hcl & length(method_hcl_col) == 1, msg = "[RadAR] Error: Invalid method for performing hierarcgical clustering")
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
 
@@ -142,14 +142,14 @@ calc_differential_radiomics <- function(rdr = NULL,
                           msg = "[RadAR] Error: invalid method to perform differential statistics")
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: feature values have not been yet normalized")
   }
 
@@ -173,8 +173,8 @@ calc_differential_radiomics <- function(rdr = NULL,
       pvalues <- apply(data, 1, calc_wilcox, conditions)
       adjusted_pvalues <- p.adjust(pvalues, method = adjust_pvalues_by)
       rowData(rdr)$wilcox_test_pvalue <- adjusted_pvalues
-      rdr@metadata$which_data_wilcox <- which_data
-      rdr@metadata$conditions_wilcox <- conditions
+      metadata(rdr)$which_data_wilcox <- which_data
+      metadata(rdr)$conditions_wilcox <- conditions
 
       if (!is.na(thr_pvalue)) {
         ix_features <- which(rowData(rdr)$wilcox_test_pvalue <= thr_pvalue  )
@@ -193,8 +193,8 @@ calc_differential_radiomics <- function(rdr = NULL,
     if (method == "auc") {
       auc <- apply(data, 1, calc_auc, conditions)
       rowData(rdr)$auc_value <- auc
-      rdr@metadata$which_data_auc <- which_data
-      rdr@metadata$conditions_auc <- conditions
+      metadata(rdr)$which_data_auc <- which_data
+      metadata(rdr)$conditions_auc <- conditions
       if (!is.na(thr_auc)) {
         ix_features <- which(rowData(rdr)$auc_value >= thr_auc | rowData(rdr)$auc_value <= (1-thr_auc) )
         if (length(ix_features) == 0) {
@@ -219,8 +219,8 @@ calc_differential_radiomics <- function(rdr = NULL,
     pvalues <- apply(data, 1, calc_kruskal_wallis, conditions)
     adjusted_pvalues <- p.adjust(pvalues, method = adjust_pvalues_by)
     rowData(rdr)$kruskal_wallis_test_pvalue <- adjusted_pvalues
-    rdr@metadata$which_data_kruskal_wallis <- which_data
-    rdr@metadata$conditions_kruskal_wallis <- conditions
+    metadata(rdr)$which_data_kruskal_wallis <- which_data
+    metadata(rdr)$conditions_kruskal_wallis <- conditions
 
     if (!is.na(thr_pvalue)) {
       ix_features <- which(rowData(rdr)$kruskal_wallis_test_pvalue <= thr_pvalue  )
@@ -303,9 +303,9 @@ select_top_features  <- function(rdr = NULL,
   which_data_concordance <- metadata(rdr)$which_data_concordance
   which_data_kruskal_wallis <- metadata(rdr)$which_data_kruskal_wallis
 
-  conditions_wilcox <- rdr@metadata$conditions_wilcox
-  conditions_auc <- rdr@metadata$conditions_auc
-  conditions_kruskal_wallis <- rdr@metadata$conditions_wilcox
+  conditions_wilcox <- metadata(rdr)$conditions_wilcox
+  conditions_auc <- metadata(rdr)$conditions_auc
+  conditions_kruskal_wallis <- metadata(rdr)$conditions_wilcox
 
   which_data <- get(paste0("which_data", "_", which_statistics))
 
@@ -325,15 +325,15 @@ select_top_features  <- function(rdr = NULL,
   }
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data),
                             msg = "[RadAR] Error: Feature values have not been scaled yet")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data),
                             msg = "[RadAR] Error: Feature values have not been normalized yet")
   }
@@ -494,14 +494,14 @@ calc_concordance_index <- function(rdr = NULL,
   }
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
 
@@ -511,7 +511,7 @@ calc_concordance_index <- function(rdr = NULL,
     #    concordance_index[i] <- concordance(surv_obj ~ data[i, ], data = data.frame(rdr_original@assays$data$values[i, ]))$concordance
   }
   rowData(rdr)$concordance_index <- concordance_index
-  rdr@metadata$which_data_concordance <- which_data
+  metadata(rdr)$which_data_concordance <- which_data
 
   if (!is.na(thr_concordance)) {
     ix_features <- which(abs(rowData(rdr)$concordance_index - .5) >= thr_concordance)
@@ -564,14 +564,14 @@ calc_cox_regression <- function(rdr = NULL,
   }
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
 
@@ -592,8 +592,8 @@ calc_cox_regression <- function(rdr = NULL,
 
   rowData(rdr)$cox_regression_statistics <- cox_regression_statistics
   rowData(rdr)$cox_hazard_ratio <- cox_hazard_ratio
-  rdr@metadata$which_data_cox <- which_data
-  rdr@metadata$which_cox_regression <- ifelse(multiple_regression, "multiple", "single")
+  metadata(rdr)$which_data_cox <- which_data
+  metadata(rdr)$which_cox_regression <- ifelse(multiple_regression, "multiple", "single")
 
   if (!is.na(thr_cox_zvalue)) {
     ix_features <- which(abs(rowData(rdr)$cox_regression_statistics) >= thr_cox_zvalue)
@@ -794,14 +794,14 @@ do_feature_selection <- function(rdr = NULL,
   }
 
   if (which_data == "normal") {
-    data <- rdr@assays$data$values
+    data <- assays(rdr)$values
   }
   if (which_data == "scaled") {
-    data <- rdr@assays$data$scaled_values
+    data <- assays(rdr)$scaled_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet scaled")
   }
   if (which_data == "normalized") {
-    data <- rdr@assays$data$norm_values
+    data <- assays(rdr)$norm_values
     assertthat::assert_that(!is.null(data), msg = "[RadAR] Error: Feature values have not been yet normalized")
   }
 

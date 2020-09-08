@@ -1,7 +1,7 @@
 Package: RadAR
 Type: Package
 Title: Radiomic Analysis with R
-Version: 0.1.2
+Version: 0.1.2a
 Authors@R: person("Matteo", "Benelli", role = c("aut", "cre"),
    email="matteo.benelli@uslcentro.toscana.it")
 Author: Matteo Benelli [aut, cre]
