@@ -341,7 +341,7 @@ check_files <- function (list_files) {
   for (i in 1: length(list_files)) {
     myfile <- file.path(list_files[i])
     tmp <-  file.size(myfile)
-    if (tmp < 10000) {
+    if (tmp < 2000) {
       message (paste("[RadAR]", myfile, "is empty or corrupted and will be discarded"))
       flag[i] <- F
     }
