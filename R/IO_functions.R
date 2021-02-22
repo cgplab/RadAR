@@ -74,12 +74,12 @@ import_pyradiomics <- function (dir = NULL) {
 
   dict_out <- retrieve_feature_dictionary(features_names = feature_names,
                                           extractor = extractor)
-#  feature_description <- rep(NA, nrow(feature_data))
+  #  feature_description <- rep(NA, nrow(feature_data))
   rowData <- data.frame(feature_name = feature_names,
                         image_type = image_types,
                         feature_description = dict_out$feature_description,
                         feature_type = dict_out$feature_type
-                        )
+  )
   #rownames(rowData) <- feature_ids
   colData <- data.frame(filename = filename_tot,
                         sample_id = sample_id,
@@ -125,38 +125,74 @@ import_3dslicer <- function (dir) {
   for (i in 1: length(list_files)) {
     message(paste("[RadAR] importing", list_files[i]))
     xx <- read.delim(list_files[i], sep = "\t", header = T)
-    # check file, i=1
-    mylabels <- unique(xx$Label)
-    if (i == 1) {
-      assertthat::assert_that(length(xx$Feature.Class) > 0, msg = "[RadAR] Error: Bad or unexpected format")
-      assertthat::assert_that(length(xx$Label) > 0, msg = "[RadAR] Error: Bad or unexpected format")
-      assertthat::assert_that(length(xx$Image.type) > 0, msg = "[RadAR] Error: Bad or unexpected format")
-      assertthat::assert_that(length(xx$Feature.Name) > 0, msg = "[RadAR] Error: Bad or unexpected format")
-      #assertthat::assert_that(all(is.numeric(xx$Value)), msg = "[RadAR] Error: Bad or unexpected format")
-      nfeatures_file0 <- table(xx$Feature.Class)/length(unique(xx$Label))
-      ix_data_tmp <- which(xx$Label == mylabels[1] & xx$Image.type %in% c("general", "diagnostics") == F)
-      image_types <- xx$Image.type[ix_data_tmp]
-      feature_names <- xx$Feature.Name[ix_data_tmp]
+    # identify file format
+    if (colnames(xx)[1] == "Label") {
+      mylabels <- unique(xx$Label)
+      if (i == 1) {
+        assertthat::assert_that(length(xx$Feature.Class) > 0, msg = "[RadAR] Error: Bad or unexpected format")
+        assertthat::assert_that(length(xx$Label) > 0, msg = "[RadAR] Error: Bad or unexpected format")
+        assertthat::assert_that(length(xx$Image.type) > 0, msg = "[RadAR] Error: Bad or unexpected format")
+        assertthat::assert_that(length(xx$Feature.Name) > 0, msg = "[RadAR] Error: Bad or unexpected format")
+        #assertthat::assert_that(all(is.numeric(xx$Value)), msg = "[RadAR] Error: Bad or unexpected format")
+        nfeatures_file0 <- table(xx$Feature.Class)/length(unique(xx$Label))
+        ix_data_tmp <- which(xx$Label == mylabels[1] & xx$Image.type %in% c("general", "diagnostics") == F)
+        image_types <- xx$Image.type[ix_data_tmp]
+        feature_names <- xx$Feature.Name[ix_data_tmp]
+
+      } else {
+        nfeatures_file <- table(xx$Feature.Class)/length(unique(xx$Label))
+        assertthat::assert_that(assertthat::are_equal(nfeatures_file0, nfeatures_file),
+                                msg = paste("[RadAR] Error: unexpected number of features in", list_files[i]))
+      }
+      ix_data <- which(xx$Image.type %in% c("general", "diagnostics") == F)
+      #xx <- xx[which(xx$Image.type %in% image_type),]
+
+      mask_id <- c(mask_id, mylabels)
+      sample_id <- c(sample_id, rep(filenames[i], length(mylabels)))
+      filename_tot <- c(filename_tot, rep(list_files[i], length(mylabels)))
+      assertthat::assert_that(!any(duplicated(xx$Mask)), msg = paste("[RadAR] duplicated mask names in", list_files[i]))
+      for (j in  1: length(mylabels)) {
+        mylabel <- mylabels[j]
+        #      mylabel <- gsub("Segmentation_segment_", "", mylabels[j])
+        feature_data <- cbind(feature_data,
+                              as.numeric(xx$Value[intersect(which(xx$Label == mylabel),ix_data)]))
+      }
+    }
+    if (colnames(xx)[1] == "Image.type") {
+      mylabels <- gsub("RTSTRUCT.", "", colnames(xx)[4: ncol(xx)])
+      if (i == 1) {
+        assertthat::assert_that(length(xx$Feature.Class) > 0, msg = "[RadAR] Error: Bad or unexpected format")
+        assertthat::assert_that(length(xx$Image.type) > 0, msg = "[RadAR] Error: Bad or unexpected format")
+        assertthat::assert_that(length(xx$Feature.Name) > 0, msg = "[RadAR] Error: Bad or unexpected format")
+        nfeatures_file0 <- nrow(xx)
+        ix_data_tmp <- which(xx$Image.type %in% c("general", "diagnostics") == F)
+        image_types <- xx$Image.type[ix_data_tmp]
+        feature_names <- xx$Feature.Name[ix_data_tmp]
+
+      } else {
+        nfeatures_file <- nrow(xx)
+        assertthat::assert_that(assertthat::are_equal(nfeatures_file0, nfeatures_file),
+                                msg = paste("[RadAR] Error: unexpected number of features in", list_files[i]))
+      }
+
+      ix_data <- which(xx$Image.type %in% c("general", "diagnostics") == F)
+
+      mask_id <- c(mask_id, mylabels)
+      sample_id <- c(sample_id, rep(filenames[i], length(mylabels)))
+      filename_tot <- c(filename_tot, rep(list_files[i], length(mylabels)))
+      #assertthat::assert_that(!any(duplicated(xx$Mask)), msg = paste("[RadAR] duplicated mask names in", list_files[i]))
+      for (j in  1: length(mylabels)) {
+        mylabel <- mylabels[j]
+        #      mylabel <- gsub("Segmentation_segment_", "", mylabels[j])
+        feature_data <- cbind(feature_data,
+                              as.numeric(xx[ix_data, paste0("RTSTRUCT.", mylabel )]))
+      }
 
     } else {
-      nfeatures_file <- table(xx$Feature.Class)/length(unique(xx$Label))
-      assertthat::assert_that(assertthat::are_equal(nfeatures_file0, nfeatures_file),
-                              msg = paste("[RadAR] Error: unexpected number of features in", list_files[i]))
-    }
-    ix_data <- which(xx$Image.type %in% c("general", "diagnostics") == F)
-    #xx <- xx[which(xx$Image.type %in% image_type),]
-
-    mask_id <- c(mask_id, mylabels)
-    sample_id <- c(sample_id, rep(filenames[i], length(mylabels)))
-    filename_tot <- c(filename_tot, rep(list_files[i], length(mylabels)))
-    assertthat::assert_that(!any(duplicated(xx$Mask)), msg = paste("[RadAR] duplicated mask names in", list_files[i]))
-    for (j in  1: length(mylabels)) {
-      mylabel <- mylabels[j]
-      #      mylabel <- gsub("Segmentation_segment_", "", mylabels[j])
-      feature_data <- cbind(feature_data,
-                            as.numeric(xx$Value[intersect(which(xx$Label == mylabel),ix_data)]))
+      assertthat::assert_that(1 < 0, msg = paste("[RadAR] Error: format unrecognized."))
     }
   }
+
   colnames(feature_data) <- sample_id
   if (length(unique(image_types)) > 1) {
     feature_ids <- paste0(feature_names, ".", image_types)
@@ -167,12 +203,12 @@ import_3dslicer <- function (dir) {
 
   dict_out <- retrieve_feature_dictionary(features_names = feature_names,
                                           extractor = extractor)
-#  feature_description <- rep(NA, nrow(feature_data))
+  #  feature_description <- rep(NA, nrow(feature_data))
   rowData <- data.frame(feature_name = feature_names,
                         image_type = image_types,
                         feature_description = dict_out$feature_description,
                         feature_type = dict_out$feature_type
-                        )
+  )
   #rownames(rowData) <- feature_ids
   colData <- data.frame(filename = filename_tot,
                         sample_id = sample_id,
@@ -268,12 +304,12 @@ import_lifex <- function (dir) {
 
   dict_out <- retrieve_feature_dictionary(features_names = feature_names,
                                           extractor = extractor)
-#  feature_description <- rep(NA, nrow(feature_data))
+  #  feature_description <- rep(NA, nrow(feature_data))
   rowData <- data.frame(feature_name = feature_names,
                         image_type = image_types,
                         feature_description = dict_out$feature_description,
                         feature_type = dict_out$feature_type
-                        )
+  )
   #rownames(rowData) <- feature_ids
   colData <- data.frame(filename = filename_tot,
                         sample_id = sample_id,
@@ -350,7 +386,7 @@ check_files <- function (list_files) {
 }
 
 allisna <- function(x) {
-    which(all(is.na(x)))
+  which(all(is.na(x)))
 }
 
 
