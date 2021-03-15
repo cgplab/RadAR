@@ -10,18 +10,7 @@ output:
     toc_collapsed: true
     number_sections: true
 ---
-<style type="text/css">
 
-h1.title {
-  text-align: center;
-}
-h4.author { 
-  text-align: center;
-}
-h4.date { 
-  text-align: center;
-}
-</style>
 
 
 ```{r setup, include=FALSE}
