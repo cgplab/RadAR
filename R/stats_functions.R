@@ -701,7 +701,7 @@ test_radiomic_signature <- function(rdr = NULL,
 #' @param method (character) Which  method use to identify redundant features. It can be one of the following:
 #' "mRMR" (minimum-redundancy-maximum-relevance),"hcl" (hierarchical clustering of correlation matrix), "pca" (K-means applied to Principal Component Analysis),
 #' "glmnet-cox" (generalized linear model via penalized maximum likelihood (glmnet) fitting cox regression model),
-#' "glmnet-binonmial" (glmnet fitting binomial regression model),
+#' "glmnet-binonial" (glmnet fitting binomial regression model),
 #' Using mRMR, this function works as a wrapper to \code{\link{mRMR}} package.
 #' Using glmnet-*, this function works as a wrapper to \code{\link{glmnet}} package.
 #'

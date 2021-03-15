@@ -38,7 +38,7 @@ Then, you can install RadAR from github with:
 devtools::install_github("cgplab/RadAR")
 ```
 
-To include vignette use:
+To include vignettes use:
 
 ```{r, eval = FALSE}
 # install.packages("devtools")
@@ -51,4 +51,4 @@ To show how to use RadAR for the analysis of radiomic datasets, a step-by-step t
 
 ## Citation
 
-Benelli M, Barucci A, Zoppetti N, Calusi S, Redapi L, Della Gala G, Piffer S, Bernardi L, Fusi F, Pallotta S. Comprehensive analysis of radiomic datasets by RadAR. Cancer Research; in press. https://cancerres.aacrjournals.org/content/early/2020/06/13/0008-5472.CAN-20-0332
+Benelli M, Barucci A, Zoppetti N, Calusi S, Redapi L, Della Gala G, Piffer S, Bernardi L, Fusi F, Pallotta S. Comprehensive analysis of radiomic datasets by RadAR. Cancer Research 80 (15), 3170-3174. https://cancerres.aacrjournals.org/content/80/15/3170
