@@ -185,7 +185,7 @@ import_3dslicer <- function (dir) {
         mylabel <- mylabels[j]
         #      mylabel <- gsub("Segmentation_segment_", "", mylabels[j])
         feature_data <- cbind(feature_data,
-                              as.numeric(xx[ix_data, paste0("RTSTRUCT.", mylabel )]))
+                              as.numeric(xx[ix_data, (3+j)]))
       }
 
     } else {
