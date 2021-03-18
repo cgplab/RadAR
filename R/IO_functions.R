@@ -159,7 +159,7 @@ import_3dslicer <- function (dir) {
       }
     }
     if (colnames(xx)[1] == "Image.type") {
-      mylabels <- gsub("RTSTRUCT.", "", colnames(xx)[4: ncol(xx)])
+      mylabels <- gsub(".* ", "", colnames(xx)[4: ncol(xx)])
       if (i == 1) {
         assertthat::assert_that(length(xx$Feature.Class) > 0, msg = "[RadAR] Error: Bad or unexpected format")
         assertthat::assert_that(length(xx$Image.type) > 0, msg = "[RadAR] Error: Bad or unexpected format")
