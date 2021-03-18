@@ -159,7 +159,8 @@ import_3dslicer <- function (dir) {
       }
     }
     if (colnames(xx)[1] == "Image.type") {
-      mylabels <- gsub(".* ", "", colnames(xx)[4: ncol(xx)])
+      tmp_header <- read.delim(list_files[i], sep = "\t", header = F, check.names = F, nrows = 1)
+      mylabels <- gsub(".* ", "", tmp_header[4: length(tmp_header)])
       if (i == 1) {
         assertthat::assert_that(length(xx$Feature.Class) > 0, msg = "[RadAR] Error: Bad or unexpected format")
         assertthat::assert_that(length(xx$Image.type) > 0, msg = "[RadAR] Error: Bad or unexpected format")
