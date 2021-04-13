@@ -64,7 +64,7 @@ import_pyradiomics <- function (dir = NULL) {
                             as.numeric(xx.data[which(xx$Mask == mylabel), ]))
     }
   }
-  colnames(feature_data) <- sample_id
+  colnames(feature_data) <- mask_id
   if (length(unique(image_types)) > 1) {
     feature_ids <- paste0(feature_names, ".", image_types)
   } else {
@@ -194,7 +194,7 @@ import_3dslicer <- function (dir) {
     }
   }
 
-  colnames(feature_data) <- sample_id
+  colnames(feature_data) <- mask_id
   if (length(unique(image_types)) > 1) {
     feature_ids <- paste0(feature_names, ".", image_types)
   } else {
@@ -266,7 +266,7 @@ import_lifex_session <- function (session) {
                           as.numeric(xx.data[which(xx$Mask == mylabel), ]))
   }
 
-  colnames(feature_data) <- sample_id
+  colnames(feature_data) <- mask_id
   if (length(unique(image_types)) > 1) {
     feature_ids <- paste0(feature_names, ".", image_types)
   } else {
@@ -397,7 +397,7 @@ import_lifex <- function (dir) {
                             as.numeric(xx.data[which(xx$Mask == mylabel), ]))
     }
   }
-  colnames(feature_data) <- sample_id
+  colnames(feature_data) <- mask_id
   if (length(unique(image_types)) > 1) {
     feature_ids <- paste0(feature_names, ".", image_types)
   } else {
