@@ -4,10 +4,18 @@
 \alias{plot_heatmap_hcl}
 \title{Draw a clustered heatmap of the radiomic dataset}
 \usage{
-plot_heatmap_hcl(rdr = NULL, show_feature_names = F,
-  show_sample_names = F, annotation_tracks = NULL,
-  annotation_data = NULL, annotation_colors = NULL, ncolors = 50,
-  save_plot_to = NULL, width_plot = 20, height_plot = 15)
+plot_heatmap_hcl(
+  rdr = NULL,
+  show_feature_names = F,
+  show_sample_names = F,
+  annotation_tracks = NULL,
+  annotation_data = NULL,
+  annotation_colors = NULL,
+  ncolors = 50,
+  save_plot_to = NULL,
+  width_plot = 20,
+  height_plot = 15
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

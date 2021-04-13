@@ -4,8 +4,13 @@
 \alias{calc_cox_regression}
 \title{Fit a Cox regression model using radiomic features}
 \usage{
-calc_cox_regression(rdr = NULL, surv_obj = NULL, thr_cox_zvalue = NA,
-  which_data = "scaled", multiple_regression = F)
+calc_cox_regression(
+  rdr = NULL,
+  surv_obj = NULL,
+  thr_cox_zvalue = NA,
+  which_data = "scaled",
+  multiple_regression = F
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

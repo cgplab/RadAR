@@ -4,8 +4,11 @@
 \alias{normalize_feature_values}
 \title{Apply normalization to feature values}
 \usage{
-normalize_feature_values(rdr = NULL, method = "quantile",
-  which_data = "scaled")
+normalize_feature_values(
+  rdr = NULL,
+  method = "quantile",
+  which_data = "scaled"
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}})}

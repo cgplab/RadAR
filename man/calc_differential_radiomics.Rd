@@ -4,9 +4,15 @@
 \alias{calc_differential_radiomics}
 \title{Perform differential radiomic analysis}
 \usage{
-calc_differential_radiomics(rdr = NULL, conditions = NULL,
-  which_data = "scaled", method = "wilcox", adjust_pvalues_by = "BH",
-  thr_pvalue = NA, thr_auc = NA)
+calc_differential_radiomics(
+  rdr = NULL,
+  conditions = NULL,
+  which_data = "scaled",
+  method = "wilcox",
+  adjust_pvalues_by = "BH",
+  thr_pvalue = NA,
+  thr_auc = NA
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

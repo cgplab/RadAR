@@ -4,8 +4,7 @@
 \alias{find_clusters}
 \title{Flag samples and/or features by cluster membership}
 \usage{
-find_clusters(rdr = NULL, n_clusters_cols = NULL,
-  n_clusters_features = NULL)
+find_clusters(rdr = NULL, n_clusters_cols = NULL, n_clusters_features = NULL)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}})}

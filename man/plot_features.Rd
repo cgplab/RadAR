@@ -4,8 +4,14 @@
 \alias{plot_features}
 \title{Draw boxplot + stripchart of selected feature(s)}
 \usage{
-plot_features(rdr = NULL, feature_names = NULL, conditions = NULL,
-  which_data = "scaled", max_range = F, user_range = NULL)
+plot_features(
+  rdr = NULL,
+  feature_names = NULL,
+  conditions = NULL,
+  which_data = "scaled",
+  max_range = F,
+  user_range = NULL
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

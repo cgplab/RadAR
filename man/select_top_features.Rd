@@ -4,9 +4,15 @@
 \alias{select_top_features}
 \title{Select top radiomic features according to a given statistics}
 \usage{
-select_top_features(rdr = NULL, which_statistics = "wilcox",
-  thr_pvalue = 0.05, thr_auc = 0.8, thr_concordance = 0.1,
-  thr_cox_zvalue = 3, write_to = NULL)
+select_top_features(
+  rdr = NULL,
+  which_statistics = "wilcox",
+  thr_pvalue = 0.05,
+  thr_auc = 0.8,
+  thr_concordance = 0.1,
+  thr_cox_zvalue = 3,
+  write_to = NULL
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

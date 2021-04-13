@@ -4,11 +4,20 @@
 \alias{do_feature_selection}
 \title{Perform feature selection based on different methods}
 \usage{
-do_feature_selection(rdr = NULL, n_features = NULL, select_by = NULL,
-  method = "hcl", surv_obj = NULL, which_data = "scaled",
-  corr_measure = "pearson", min_features_per_group = 5,
-  thr_pca_cum_prop = 0.8, response = NULL, lambda = "min",
-  alpha = NULL)
+do_feature_selection(
+  rdr = NULL,
+  n_features = NULL,
+  select_by = NULL,
+  method = "hcl",
+  surv_obj = NULL,
+  which_data = "scaled",
+  corr_measure = "pearson",
+  min_features_per_group = 5,
+  thr_pca_cum_prop = 0.8,
+  response = NULL,
+  lambda = "min",
+  alpha = NULL
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}
@@ -21,7 +30,7 @@ of similar (i.e., redundant) features. It can be one of the following: "variabil
 \item{method}{(character) Which  method use to identify redundant features. It can be one of the following:
 "mRMR" (minimum-redundancy-maximum-relevance),"hcl" (hierarchical clustering of correlation matrix), "pca" (K-means applied to Principal Component Analysis),
 "glmnet-cox" (generalized linear model via penalized maximum likelihood (glmnet) fitting cox regression model),
-"glmnet-binonmial" (glmnet fitting binomial regression model),
+"glmnet-binonial" (glmnet fitting binomial regression model),
 Using mRMR, this function works as a wrapper to \code{\link{mRMR}} package.
 Using glmnet-*, this function works as a wrapper to \code{\link{glmnet}} package.}
 

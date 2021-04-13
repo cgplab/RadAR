@@ -4,11 +4,21 @@
 \alias{plot_correlation_matrix}
 \title{Draw correlation matrix of radiomic features}
 \usage{
-plot_correlation_matrix(rdr = NULL, view_as = c("heatmap", "corrplot"),
-  method_correlation = "pearson", method_hcl = "ward.D",
-  which_data = "normal", cex_labels = 0.5, srt_labels = 45,
-  ncolors = 50, save_plot_to = NULL, width_plot = 20,
-  height_plot = 15, show_names = T, show_dendrogram = T)
+plot_correlation_matrix(
+  rdr = NULL,
+  view_as = c("heatmap", "corrplot"),
+  method_correlation = "pearson",
+  method_hcl = "ward.D",
+  which_data = "normal",
+  cex_labels = 0.5,
+  srt_labels = 45,
+  ncolors = 50,
+  save_plot_to = NULL,
+  width_plot = 20,
+  height_plot = 15,
+  show_names = T,
+  show_dendrogram = T
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

@@ -4,10 +4,14 @@
 \alias{do_hierarchical_clustering}
 \title{Perform hierarchical clustering of the radiomic dataset}
 \usage{
-do_hierarchical_clustering(rdr = NULL, which_data = "scaled",
+do_hierarchical_clustering(
+  rdr = NULL,
+  which_data = "scaled",
   method_dist_row = "euclidean",
-  method_dist_col = "correlation.pearson", method_hcl_row = "ward.D",
-  method_hcl_col = "ward.D")
+  method_dist_col = "correlation.pearson",
+  method_hcl_row = "ward.D",
+  method_hcl_col = "ward.D"
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

@@ -4,8 +4,13 @@
 \alias{test_radiomic_signature}
 \title{Test radiomic signature by Cox regression model}
 \usage{
-test_radiomic_signature(rdr = NULL, surv_obj = NULL,
-  signature = NULL, signature_rdr = NULL, which_data = "scaled")
+test_radiomic_signature(
+  rdr = NULL,
+  surv_obj = NULL,
+  signature = NULL,
+  signature_rdr = NULL,
+  which_data = "scaled"
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

@@ -4,8 +4,12 @@
 \alias{calc_concordance_index}
 \title{Compute concordance index for radiomic features}
 \usage{
-calc_concordance_index(rdr = NULL, surv_obj = NULL,
-  thr_concordance = NA, which_data = "scaled")
+calc_concordance_index(
+  rdr = NULL,
+  surv_obj = NULL,
+  thr_concordance = NA,
+  which_data = "scaled"
+)
 }
 \arguments{
 \item{rdr}{A RadAR object (class \code{\link{SummarizedExperiment}}).}

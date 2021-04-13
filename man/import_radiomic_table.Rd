@@ -14,7 +14,7 @@ First row should report sample names. First column should report feature names.}
 A RadAR object (class \code{\link{SummarizedExperiment}})
 }
 \description{
-This functions imports a table of radiomic features (features in rows, samples in columns)
+This functions imports a table of radiomic features (features in rows, patients in columns)
 }
 \author{
 Matteo Benelli (\email{matteo.benelli@uslcentro.toscana.it})
