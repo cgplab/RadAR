@@ -237,7 +237,9 @@ import_lifex_session <- function (session) {
   assertthat::assert_that(length(session) > 0, msg = paste("[RadAR] Error:", session, "should be specified"))
   extractor <- "lifex"
 
-  xx <- read.delim(file = session, sep = ",", header = T, skip = 1)
+  tmp0 <- scan(file = session, what = "", sep = "\n")
+  skiplines <- grep("^INFO", tmp0)[1] - 1
+  xx <- read.delim(file = session, sep = ",", header = T, skip = skiplines)
   ncol_file <- ncol(xx)
   prefix_data <- gsub("_.*", "", colnames(xx))
   ix_data <- which(prefix_data %in% c("HISTO",
@@ -257,7 +259,7 @@ import_lifex_session <- function (session) {
   mask_id <- xx$Mask
   sample_id <- mask_id
   filename_tot <- rep(session, nrow(xx))
-  assertthat::assert_that(!any(duplicated(xx$Mask)), msg = paste("[RadAR] duplicated mask names in", list_files[i]))
+  assertthat::assert_that(!any(duplicated(xx$Mask)), msg = paste("[RadAR] duplicated mask names in", session))
   mylabels <- mask_id
   feature_data <- c()
   for (j in  1: length(mylabels)) {
