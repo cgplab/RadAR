@@ -271,10 +271,10 @@ plot_features <- function(rdr = NULL,
       range_feature <- as.numeric(user_range)
     }
 
-    boxplot(data[feature_names[i], ] ~ conditions, varwidth = T, frame.plot = F, las = 1,
+    boxplot(unlist(data[feature_names[i], ]) ~ conditions, varwidth = T, frame.plot = F, las = 1,
             pch = 19, outline = F, ylim = range_feature, main = feature_names[i],
             xlab = "", ylab = "Feature value")
-    stripchart(data[feature_names[i], ] ~ conditions, pch = 19, col = "grey60", add = T, vertical = T,
+    stripchart(unlist(data[feature_names[i], ]) ~ conditions, pch = 19, col = "grey60", add = T, vertical = T,
                method = "jitter")
     grid()
   }
