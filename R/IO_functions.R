@@ -460,6 +460,7 @@ import_radiomic_table <- function (file = NULL) {
 
   extractor <- "unknown / generic table"
   feature_data <- read.delim(file = file, sep = "\t", row.names = 1, header = T)
+  feature_data <- as.matrix(feature_data)
   colData <- data.frame (sample_id = colnames(feature_data))
   rowData <- data.frame (feature_name = rownames(feature_data))
   rownames(colData) <- colnames(feature_data)
@@ -471,9 +472,6 @@ import_radiomic_table <- function (file = NULL) {
 
 }
 
-# import_generic <- function (x, ...) {
-#
-# }
 
 
 new_radar_dataset <- function (features, rowData, colData, metadata) {

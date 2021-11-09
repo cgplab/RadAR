@@ -753,7 +753,7 @@ do_feature_selection <- function(rdr = NULL,
   if (method %in% c("hcl", "pca", "mRMR")) {
     assertthat::assert_that(min_features_per_group > 0 & min_features_per_group < (nrow(rdr)-n_features) ,
                             msg = "[RadAR] min_features_per_group should be in the range [1, (total features - n_features)]")
-    assertthat::assert_that(length(n_features) == 1, msg = "[RadAR] n_features required for methods hcl, pca or mRMR")
+    assertthat::assert_that(!is.null(n_features), msg = "[RadAR] n_features required for methods hcl, pca or mRMR")
 
   }
 
@@ -764,7 +764,9 @@ do_feature_selection <- function(rdr = NULL,
   if (method == "mRMR") {
     assertthat::assert_that(length(response) > 0, msg = "[RadAR] Error: For mRMR a response variable is required")
     assertthat::assert_that(length(response) == ncol(rdr), msg = "[RadAR] Error: Response variable should have same length of ncol(rdr)")
-    assertthat::assert_that(length(unique(response)) == 2, msg = "[RadAR] Error: Response variable should have two states")
+    assertthat::assert_that(length(unique(response)) == 2  |
+                              (length(unique(response)) == 3 & any(is.na(unique(response)))),
+                            msg = "[RadAR] Error: Response variable should have two states")
     select_by <- "none"
   }
   if (method %in% c("glmnet-cox", "glmnet-binomial")) {
